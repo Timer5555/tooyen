@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการของในตู้เย็น</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+        .tab-active { border-color: #f97316; color: #f97316; }
+        .focus-ring-orange:focus { --tw-ring-color: #f97316; }
+    </style>
+</head>
+<body class="bg-zinc-900 text-gray-300 py-8">
+    <div class="container mx-auto px-4">
+        <!-- Tab Navigation -->
+        <div class="mb-8 max-w-md mx-auto">
+            <div class="flex border-b border-zinc-700">
+                <button id="tab-form-btn" class="flex-1 py-3 px-4 text-center font-semibold border-b-2 tab-active" onclick="switchTab('form')">ตู้เย็นของฉัน</button>
+                <button id="tab-list-btn" class="flex-1 py-3 px-4 text-center font-semibold text-gray-500 border-b-2 border-transparent hover:text-orange-500 transition" onclick="switchTab('list')">รายการของทั้งหมด</button>
+            </div>
+        </div>
+        <!-- Tab Content -->
+        <div id="tab-content">
+            <!-- Form Tab -->
+            <div id="tab-form-content">
+                <div class="w-full max-w-md bg-zinc-800/50 backdrop-blur-sm rounded-xl shadow-lg p-8 mx-auto border border-zinc-700">
+                    <h1 class="text-3xl font-bold text-center text-gray-100 mb-8">เพิ่มของในตู้เย็น</h1>
+                    <form id="itemForm">
+                        <div class="mb-4">
+                            <label for="itemName" class="block text-gray-400 text-sm font-bold mb-2">ชื่อรายการ:</label>
+                            <input type="text" id="itemName" required class="bg-zinc-700 border border-zinc-600 text-gray-200 rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus-ring-orange focus:border-transparent">
+                        </div>
+                        <div class="mb-4">
+                            <label for="quantity" class="block text-gray-400 text-sm font-bold mb-2">จำนวน/ปริมาณ:</label>
+                            <input type="text" id="quantity" required class="bg-zinc-700 border border-zinc-600 text-gray-200 rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus-ring-orange focus:border-transparent">
+                        </div>
+                        <div class="mb-6">
+                            <label for="expiryDate" class="block text-gray-400 text-sm font-bold mb-2">วันหมดอายุ:</label>
+                            <input type="date" id="expiryDate" required class="bg-zinc-700 border border-zinc-600 text-gray-200 rounded-lg w-full py-3 px-4 focus:outline-none focus:ring-2 focus-ring-orange focus:border-transparent" style="color-scheme: dark;">
+                        </div>
+                        <div class="flex items-center justify-center mt-8">
+                            <button type="submit" id="submitButton" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline w-full transition-all duration-300 transform hover:scale-105">บันทึกรายการ</button>
+                        </div>
+                    </form>
+                    <div id="statusMessage" class="mt-6 text-center text-sm"></div>
+                </div>
+            </div>
+            <!-- Item List Tab -->
+            <div id="tab-list-content" class="hidden">
+                <div class="w-full max-w-4xl bg-zinc-800/50 backdrop-blur-sm rounded-xl shadow-lg p-8 mx-auto border border-zinc-700">
+                    <h2 class="text-2xl font-bold text-gray-100 mb-6">รายการของทั้งหมด</h2>
+                    <div id="listContainer" class="overflow-x-auto">
+                        <p id="loadingListMessage" class="text-center text-gray-500">กำลังโหลดรายการ...</p>
+                        <table id="itemTable" class="min-w-full hidden">
+                            <thead class="border-b border-zinc-700">
+                                <tr>
+                                    <th class="text-center py-3 px-4 uppercase font-semibold text-sm text-gray-400">ลำดับ</th>
+                                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm text-gray-400">ชื่อรายการ</th>
+                                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm text-gray-400">จำนวน</th>
+                                    <th class="text-left py-3 px-4 uppercase font-semibold text-sm text-gray-400">วันหมดอายุ</th>
+                                    <th class="text-center py-3 px-4 uppercase font-semibold text-sm text-gray-400">ลบ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemTableBody" class="text-gray-300"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Confirmation Modal -->
+        <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm overflow-y-auto h-full w-full hidden">
+            <div class="relative top-20 mx-auto p-5 border border-zinc-700 w-96 shadow-lg rounded-xl bg-zinc-800">
+                <div class="mt-3 text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-900/50">
+                        <svg class="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-100 mt-2">ยืนยันการลบ</h3>
+                    <div class="mt-2 px-7 py-3"><p class="text-sm text-gray-400">คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? การกระทำนี้ไม่สามารถย้อนกลับได้</p></div>
+                    <div class="items-center px-4 py-3">
+                        <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-600 focus:outline-none transition-colors">ตกลง</button>
+                        <button id="cancelDeleteBtn" class="px-4 py-2 bg-zinc-700 text-gray-300 text-base font-medium rounded-md w-24 hover:bg-zinc-600 focus:outline-none transition-colors">ยกเลิก</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0UMhtLcQ51BJlchgdNntNe5WRC9DGP7e4seBJ70mBMZ36OGlOMhV7EBmq7bjzseNX_w/exec"; // <-- ใส่ URL ของคุณที่นี่
+
+        const form = document.getElementById('itemForm');
+        const submitButton = document.getElementById('submitButton');
+        const statusMessage = document.getElementById('statusMessage');
+        const itemTableBody = document.getElementById('itemTableBody');
+        const loadingListMessage = document.getElementById('loadingListMessage');
+        const itemTable = document.getElementById('itemTable');
+        const deleteModal = document.getElementById('deleteModal');
+        let deleteItemId = null;
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
+            document.querySelectorAll('#tab-content > div').forEach(content => content.classList.add('hidden'));
+            const activeBtn = document.getElementById(`tab-${tabName}-btn`);
+            const activeContent = document.getElementById(`tab-${tabName}-content`);
+            if (activeBtn) activeBtn.classList.add('tab-active');
+            if (activeContent) activeContent.classList.remove('hidden');
+            if (tabName === 'list') {
+                fetchAndDisplayItems();
+            }
+        }
+
+        async function apiCall(payload) {
+            if (SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL")) {
+                throw new Error('กรุณาใส่ URL ของ Google Apps Script ในโค้ดก่อน');
+            }
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                mode: 'cors'
+            });
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.statusText}`);
+            }
+            const result = await response.json();
+            if (result.status !== 'success') {
+                throw new Error(result.message || 'An unknown API error occurred.');
+            }
+            return result;
+        }
+
+        async function fetchAndDisplayItems() {
+            loadingListMessage.textContent = 'กำลังโหลดรายการ...';
+            itemTable.classList.add('hidden');
+            itemTableBody.innerHTML = '';
+            try {
+                const result = await apiCall({ action: 'get' });
+                if (result.data && result.data.length > 0) {
+                    result.data.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.className = 'border-b border-zinc-700 hover:bg-zinc-700/50';
+                        const expiryDate = new Date(item.expiryDate);
+                        const formattedExpiryDate = !isNaN(expiryDate.getTime()) ? expiryDate.toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'N/A';
+                        row.innerHTML = `
+                            <td class="text-center py-3 px-4">${item.id}</td>
+                            <td class="text-left py-3 px-4 text-gray-100">${item.itemName}</td>
+                            <td class="text-left py-3 px-4">${item.quantity}</td>
+                            <td class="text-left py-3 px-4">${formattedExpiryDate}</td>
+                            <td class="text-center py-3 px-4">
+                                <button class="text-red-500 hover:text-red-600 transition-colors" onclick="showDeleteModal(${item.id})">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </td>`;
+                        itemTableBody.appendChild(row);
+                    });
+                    itemTable.classList.remove('hidden');
+                    loadingListMessage.textContent = '';
+                } else {
+                    loadingListMessage.textContent = 'ยังไม่มีรายการในตู้เย็น';
+                }
+            } catch (error) {
+                console.error('Error fetching items:', error);
+                loadingListMessage.textContent = `❌ ไม่สามารถโหลดรายการได้: ${error.message}`;
+            }
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            submitButton.disabled = true;
+            submitButton.textContent = 'กำลังบันทึก...';
+            statusMessage.textContent = '';
+            try {
+                const payload = {
+                    action: 'add',
+                    itemName: document.getElementById('itemName').value,
+                    quantity: document.getElementById('quantity').value,
+                    expiryDate: document.getElementById('expiryDate').value,
+                };
+                await apiCall(payload);
+                statusMessage.textContent = '✅ บันทึกรายการสำเร็จ!';
+                statusMessage.classList.add('text-green-500');
+                form.reset();
+                setTimeout(() => statusMessage.textContent = '', 3000);
+            } catch (error) {
+                console.error('Error adding item:', error);
+                statusMessage.textContent = `❌ เกิดข้อผิดพลาด: ${error.message}`;
+                statusMessage.classList.add('text-red-500');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'บันทึกรายการ';
+            }
+        }
+
+        function showDeleteModal(id) {
+            deleteItemId = id;
+            deleteModal.classList.remove('hidden');
+        }
+
+        async function handleConfirmDelete() {
+            if (!deleteItemId) return;
+            const button = document.getElementById('confirmDeleteBtn');
+            button.disabled = true;
+            button.textContent = 'กำลังลบ...';
+            try {
+                await apiCall({ action: 'delete', id: deleteItemId });
+                deleteModal.classList.add('hidden');
+                fetchAndDisplayItems(); // Refresh list after successful deletion
+            } catch (error) {
+                console.error('Error deleting item:', error);
+                alert(`เกิดข้อผิดพลาดในการลบรายการ: ${error.message}`);
+            } finally {
+                button.disabled = false;
+                button.textContent = 'ตกลง';
+                deleteItemId = null;
+            }
+        }
+
+        form.addEventListener('submit', handleFormSubmit);
+        document.getElementById('cancelDeleteBtn').addEventListener('click', () => deleteModal.classList.add('hidden'));
+        document.getElementById('confirmDeleteBtn').addEventListener('click', handleConfirmDelete);
+        document.addEventListener('DOMContentLoaded', () => switchTab('form'));
+    </script>
+</body>
+</html>
